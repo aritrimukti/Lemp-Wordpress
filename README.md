@@ -1,67 +1,79 @@
-🚀 WordPress Server Rebuild Automation (Debian/LEMP)
-Dokumen ini berisi panduan penggunaan skrip otomasi untuk membangun ulang (rebuild) server WordPress dengan standar keamanan tinggi (High Hardening) menggunakan stack teknologi modern.
+---
 
-🛠️ Stack Teknologi (LEMP)
-Sistem ini dibangun menggunakan komponen terbaik untuk performa dan skalabilitas:
+# 🚀 WordPress Server Rebuild Automation (Debian/LEMP)
 
-Operating System: Debian (Optimasi otomatis untuk versi 11/12).
+Skrip ini dirancang untuk melakukan pembangunan ulang (*rebuild*) server WordPress secara otomatis pada distro berbasis **Debian**. Fokus utama skrip ini adalah kecepatan instalasi, penggunaan stack modern, dan penguatan keamanan (*Hardening*).
 
-Web Server: Nginx (Konfigurasi anti-konflik & efisiensi trafik tinggi).
+## 🛠️ Stack Teknologi (LEMP)
 
-Database: MariaDB (Sistem manajemen database yang lebih cepat dari MySQL standar).
+Sistem ini menggunakan kombinasi perangkat lunak terbaik untuk menjamin performa tinggi:
 
-PHP 8.3: Versi terbaru untuk eksekusi kode WordPress yang paling optimal.
+* **Operating System:** Debian (Optimal untuk versi 11/12).
+* **Web Server:** Nginx (Konfigurasi anti-konflik, ringan, dan cepat).
+* **Database:** MariaDB (Sistem manajemen database yang dioptimalkan untuk performa Linux).
+* **PHP 8.3:** Versi terbaru untuk eksekusi kode WordPress yang lebih efisien dan aman.
+* **Security:** Fail2Ban (Perlindungan otomatis terhadap serangan *Brute Force* login).
+* **Management:** phpMyAdmin (Akses database melalui URL rahasia).
 
-Security IPS: Fail2Ban (Proteksi otomatis terhadap serangan Brute Force pada login WP).
+---
 
-Database Management: phpMyAdmin (Akses melalui URL rahasia untuk menghindari pemindaian bot).
+## 🚀 Cara Penggunaan (One-Liner)
 
-📊 Nginx vs Apache
-Skrip ini memilih Nginx karena keunggulannya dalam menangani banyak pengunjung sekaligus dengan penggunaan RAM yang sangat rendah dibandingkan Apache tradisional.
+Jalankan perintah berikut di terminal server Anda dengan hak akses **root**:
 
-🚀 Panduan Instalasi (One-Liner)
-Cukup jalankan satu baris perintah di bawah ini pada terminal server Anda (sebagai root):
+```bash
+curl -sSL [MASUKKAN_URL_RAW_GITHUB_ANDA] -o rb.sh && chmod +x rb.sh && ./rb.sh
 
-Bash
-curl -sSL [URL_RAW_GITHUB_ANDA] -o rb.sh && chmod +x rb.sh && ./rb.sh
-⚠️ Catatan Penting Saat Proses Jalur:
-Password Database: Anda akan diminta memasukkan password ROOT database di awal proses. Harap catat dan simpan baik-baik.
+```
 
-Configuring msmtp: Jika muncul layar biru (pop-up) mengenai AppArmor, pilih <No> untuk memastikan fitur pengiriman email sistem tidak terblokir oleh kendala izin akses kernel.
+### ⚠️ Catatan Penting Saat Instalasi:
 
-🔒 Fitur Keamanan & Akses
-1. Jalur Rahasia Database
-Untuk meningkatkan keamanan, panel database tidak dapat diakses melalui /phpmyadmin. Gunakan URL berikut: http://[IP_SERVER_ANDA]/kelola_db_aman/
+1. **Password Database:** Anda akan diminta menentukan password ROOT database di awal skrip. Pastikan untuk mencatatnya.
+2. **Konfigurasi msmtp:** Jika muncul dialog biru mengenai **AppArmor**, sangat disarankan untuk memilih **`<No>`**. Hal ini bertujuan agar sistem pengiriman email WordPress tidak terhambat oleh pembatasan izin akses kernel yang terlalu ketat.
 
-2. Monitoring Fail2Ban
-Server ini dilengkapi "satpam" otomatis. Jika seseorang salah memasukkan password WordPress sebanyak 5 kali dalam 10 menit, IP mereka akan diblokir selama 1 jam.
+---
 
-Cek IP terblokir: fail2ban-client status wordpress
+## 🔒 Fitur Keamanan Unggulan
 
-Buka blokir IP: fail2ban-client set wordpress unbanip [ALAMAT_IP]
+### 1. URL Database Rahasia
 
-📧 Notifikasi Email (SMTP Gmail)
-Agar WordPress Anda bisa mengirim email (seperti notifikasi password), ikuti langkah konfigurasi berikut:
+Untuk menghindari serangan otomatis dari bot peretas, akses database tidak menggunakan jalur standar `/phpmyadmin`. Gunakan URL berikut:
+`http://[IP_SERVER_ANDA]/kelola_db_aman/`
 
-Google Account: Aktifkan 2-Step Verification dan buat App Password (16 digit).
+### 2. Nginx Hardening
 
-WordPress Plugin: Gunakan plugin WP Mail SMTP.
+Skrip secara otomatis mengonfigurasi Nginx untuk:
 
-Settings:
+* Menyembunyikan versi server (*server_tokens off*).
+* Memblokir query berbahaya (seperti *base64_encode* atau *GLOBALS*).
+* Mencegah eksekusi file PHP di folder unggahan (*wp-content/uploads*).
 
-SMTP Host: smtp.gmail.com
+### 3. Proteksi Fail2Ban
 
-Encryption: TLS (Port 587)
+Server dilengkapi deteksi serangan login otomatis. Jika terdapat 5 kegagalan login dalam waktu 10 menit, IP penyerang akan diblokir selama 1 jam.
 
-Username: Email Gmail Anda.
+* **Cek status blokir:** `fail2ban-client status wordpress`
+* **Buka blokir IP:** `fail2ban-client set wordpress unbanip [ALAMAT_IP]`
 
-Password: 16 digit App Password yang baru dibuat.
+---
 
-📂 Struktur Izin File
-Skrip ini secara otomatis mengatur izin file WordPress sesuai standar keamanan:
+## 📧 Notifikasi Email (SMTP Gmail)
 
-Folder: 755 (Hanya pemilik yang bisa tulis).
+Agar fitur kirim email dari WordPress (seperti lupa password) berfungsi:
 
-File: 644 (Hanya pemilik yang bisa ubah).
+1. Gunakan plugin **WP Mail SMTP** di Dashboard WordPress.
+2. Konfigurasi menggunakan **App Password** Google (16 digit) dengan metode enkripsi **TLS** pada port **587**.
 
-Ownership: www-data (Aman untuk operasional Nginx).
+---
+
+## 📂 Manajemen Izin File
+
+Skrip mengatur izin file secara otomatis agar aman namun tetap fungsional:
+
+* **Folder:** `755`
+* **File:** `644`
+* **Ownership:** `www-data`
+
+---
+
+**Status Skrip:** Stable - Optimized for Debian 11/12
