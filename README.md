@@ -156,5 +156,3 @@ add_action('wp_logout', function() {
 });
 
 ```
-
-Would you like me to help you create a specific bash script that automates the `functions.php` and `wp-config.php` edits so you don't have to do it manually?
