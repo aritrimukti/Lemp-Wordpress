@@ -77,3 +77,84 @@ Skrip mengatur izin file secara otomatis agar aman namun tetap fungsional:
 ---
 
 **Status Skrip:** Stable - Optimized for Debian 11/12
+
+---
+
+# Tambahan
+---
+# 🚀 WordPress Dual-Access & Smart Logout (Debian LEMP)
+
+Dokumentasi ini menyediakan panduan lengkap untuk mengonfigurasi server WordPress agar dapat diakses melalui alamat IP lokal dan nama domain secara bersamaan, serta peningkatan pengalaman pengguna melalui sistem *auto-redirect* setelah logout.
+
+---
+
+## 🛠️ Fitur Utama
+
+* **Dual-Access (Dynamic URL):** Website dapat diakses melalui IP `xxx.xx.xx.xxx` dan domain `domain.com` secara bergantian tanpa terjadi *redirect loop*.
+* **Smart Logout Redirect:** Secara otomatis mengarahkan pengguna kembali ke halaman Beranda (Home) setelah klik logout.
+* **Anti-Download Script:** Konfigurasi Nginx yang memastikan file `.php` dieksekusi oleh PHP 8.3-FPM, bukan terunduh sebagai file teks.
+* **Hidden Database Access:** Jalur phpMyAdmin disembunyikan pada `/kelola_db_aman/`.
+
+---
+
+## 🔧 Teknis Sinkronisasi Akses IP & Domain
+
+### 1. Perubahan pada `wp-config.php`
+
+**Lokasi File:** `/var/www/html/wp-config.php`
+**Instruksi:** Tambahkan kode berikut tepat di bawah baris `<?php` agar WordPress mengenali URL pengakses secara dinamis.
+
+```php
+/* -------------------------------------------------------------------------
+ * TEKNIS SINKRONISASI: Dynamic Site URL
+ * Baris ini memungkinkan WP mendeteksi alamat akses (IP/Domain) secara otomatis.
+ * ------------------------------------------------------------------------- */
+define('WP_HOME', 'http://' . $_SERVER['HTTP_HOST']);
+define('WP_SITEURL', 'http://' . $_SERVER['HTTP_HOST']);
+
+```
+
+### 2. Perubahan pada Nginx Server Block
+
+**Lokasi File:** `/etc/nginx/sites-available/default`
+**Instruksi:** Sesuaikan isi file Anda agar identik dengan struktur berikut untuk mendukung akses ganda dan mencegah error "try_files duplicate".
+
+```nginx
+server {
+    listen 80;
+    
+    # Masukkan IP dan Domain Anda di sini
+    server_name xxx.xx.xx.xxx domain.com www.domain.com;
+
+    root /var/www/html;
+    index index.php index.html;
+
+    location / {
+        # Mengarahkan trafik ke index.php WordPress
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location ~ \.php$ {
+        # Menghubungkan ke PHP-FPM 8.3 melalui Unix Socket
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    }
+}
+
+```
+
+## ⚙️ Penerapan Fitur Logout Redirect
+
+**Lokasi File:** `/var/www/html/wp-content/themes/[tema-anda]/functions.php`
+**Instruksi:** Tambahkan kode ini di bagian paling akhir file untuk meningkatkan User Experience (UX).
+
+```php
+/* Otomatis Redirect ke Home Setelah Logout */
+add_action('wp_logout', function() {
+    wp_safe_redirect( home_url() );
+    exit;
+});
+
+```
+
+Would you like me to help you create a specific bash script that automates the `functions.php` and `wp-config.php` edits so you don't have to do it manually?
