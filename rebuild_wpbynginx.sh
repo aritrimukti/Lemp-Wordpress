@@ -1,6 +1,6 @@
 #!/bin/bash
 # =================================================================
-# REBUILD_WPBYNGINX.SH (DEBIAN FIX - ANTI ERROR VERSION)
+# REBUILD_WPBYNGINX.SH (FINAL STABLE VERSION)
 # =================================================================
 
 # Validasi Root
@@ -10,7 +10,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 echo "==============================================================="
-echo "   REBUILD SERVER WORDPRESS - MODE AMAN"
+echo "   REBUILD SERVER WORDPRESS - MODE AMAN (DEBIAN)"
 echo "==============================================================="
 read -sp "Tentukan Password ROOT Database Baru: " DB_PASSWORD
 echo -e "\n"
@@ -48,7 +48,7 @@ mariadb -e "CREATE DATABASE IF NOT EXISTS wordpress;"
 mariadb -e "FLUSH PRIVILEGES;"
 
 # --- 5. NGINX & SECURITY HARDENING ---
-echo "[5/6] Mengonfigurasi Nginx (Anti-Conflict)..."
+echo "[5/6] Mengonfigurasi Nginx (Mengarahkan IP ke Home WordPress)..."
 mkdir -p /etc/nginx/sites-available
 sed -i 's/# server_tokens off;/server_tokens off;/' /etc/nginx/nginx.conf
 
@@ -57,16 +57,16 @@ server {
     listen 80;
     server_name _;
     root /var/www/html;
-    index index.php index.html;
+    index index.php index.html index.htm;
 
     # Hardening: Blokir query berbahaya
     if (\$query_string ~ "base64_encode.*\(.*\)") { return 403; }
     if (\$query_string ~ "GLOBALS(=|\[|\%[0-9A-Z]{0,2})") { return 403; }
 
-    # PHP-MYADMIN RAHASIA (Fixed: No duplicate try_files)
+    # PHP-MYADMIN RAHASIA
     location /kelola_db_aman {
         root /var/www/html;
-        index index.php index.html index.htm;
+        index index.php index.html;
         location ~ ^/kelola_db_aman/(.+\.php)$ {
             root /var/www/html;
             fastcgi_pass unix:/run/php/php8.3-fpm.sock;
@@ -74,11 +74,12 @@ server {
         }
     }
 
-    # WORDPRESS
+    # WORDPRESS HOME (Mengarahkan IP agar tidak terdownload)
     location / {
         try_files \$uri \$uri/ /index.php?\$args;
     }
 
+    # PHP PROCESSING
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php8.3-fpm.sock;
