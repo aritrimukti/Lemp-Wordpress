@@ -1,48 +1,67 @@
-```
-# 🚀 WordPress Server Rebuild Automation (Debian/LEMP)
+🚀 WordPress Server Rebuild Automation (Debian/LEMP)
+Dokumen ini berisi panduan penggunaan skrip otomasi untuk membangun ulang (rebuild) server WordPress dengan standar keamanan tinggi (High Hardening) menggunakan stack teknologi modern.
 
-Skrip otomatisasi untuk membangun ulang (rebuild) server WordPress
-dengan standar keamanan tinggi (*Hardening*) menggunakan stack modern.
+🛠️ Stack Teknologi (LEMP)
+Sistem ini dibangun menggunakan komponen terbaik untuk performa dan skalabilitas:
 
-## 🛠️ Stack Teknologi
-- **Web Server:** Nginx (Anti-conflict config)
-- **Database:** MariaDB (MySQL Native Support)
-- **PHP:** Version 8.3 (FastCGI)
-- **Security:** Fail2Ban (WP-Login protection) & Nginx Hardening
-- **Database Management:** phpMyAdmin (Hidden Secret URL)
+Operating System: Debian (Optimasi otomatis untuk versi 11/12).
 
-## 📖 Fitur Utama
-- **Auto-Fix Repository:** Mendeteksi versi Debian (Bookworm/Bullseye) secara otomatis untuk instalasi PHP 8.3.
-- **Hidden DB URL:** Mengamankan akses database melalui URL rahasia `/kelola_db_aman`.
-- **Brute Force Protection:** Proteksi otomatis terhadap serangan login pada WordPress.
-- **Clean Install:** Menghapus sisa-sisa instalasi lama yang rusak sebelum memulai proses baru.
+Web Server: Nginx (Konfigurasi anti-konflik & efisiensi trafik tinggi).
 
-## 🚀 Cara Penggunaan
+Database: MariaDB (Sistem manajemen database yang lebih cepat dari MySQL standar).
 
-### 1. Metode One-Liner (Instan)
-Jalankan perintah berikut di terminal server Anda:
-```
-curl -sSL [MASUKKAN_URL_RAW_GITHUB_ANDA] -o rb.sh && chmod +x rb.sh && ./rb.sh
+PHP 8.3: Versi terbaru untuk eksekusi kode WordPress yang paling optimal.
 
-```
+Security IPS: Fail2Ban (Proteksi otomatis terhadap serangan Brute Force pada login WP).
 
-### 2. Panduan Penting Saat Instalasi
+Database Management: phpMyAdmin (Akses melalui URL rahasia untuk menghindari pemindaian bot).
 
-* **Konfigurasi msmtp:** Jika muncul layar biru konfigurasi `msmtp`,
-pilih **`<No>`** pada opsi AppArmor untuk menghindari error perizinan.
-* **Password Database:** Masukkan password yang kuat saat diminta di awal skrip.
+📊 Nginx vs Apache
+Skrip ini memilih Nginx karena keunggulannya dalam menangani banyak pengunjung sekaligus dengan penggunaan RAM yang sangat rendah dibandingkan Apache tradisional.
 
-## 📧 Konfigurasi Email (SMTP Gmail)
+🚀 Panduan Instalasi (One-Liner)
+Cukup jalankan satu baris perintah di bawah ini pada terminal server Anda (sebagai root):
 
-Agar WordPress dapat mengirim email:
+Bash
+curl -sSL [URL_RAW_GITHUB_ANDA] -o rb.sh && chmod +x rb.sh && ./rb.sh
+⚠️ Catatan Penting Saat Proses Jalur:
+Password Database: Anda akan diminta memasukkan password ROOT database di awal proses. Harap catat dan simpan baik-baik.
 
-1. Aktifkan **2-Step Verification** di Akun Google.
-2. Buat **App Password** (16 digit).
-3. Gunakan plugin **WP Mail SMTP** di WordPress dengan host `smtp.gmail.com` dan port `587 (TLS)`.
+Configuring msmtp: Jika muncul layar biru (pop-up) mengenai AppArmor, pilih <No> untuk memastikan fitur pengiriman email sistem tidak terblokir oleh kendala izin akses kernel.
 
-## 🔒 Monitoring Keamanan
+🔒 Fitur Keamanan & Akses
+1. Jalur Rahasia Database
+Untuk meningkatkan keamanan, panel database tidak dapat diakses melalui /phpmyadmin. Gunakan URL berikut: http://[IP_SERVER_ANDA]/kelola_db_aman/
 
-* Cek IP yang diblokir: `fail2ban-client status wordpress`
-* Buka blokir IP: `fail2ban-client set wordpress unbanip [ALAMAT_IP]`
+2. Monitoring Fail2Ban
+Server ini dilengkapi "satpam" otomatis. Jika seseorang salah memasukkan password WordPress sebanyak 5 kali dalam 10 menit, IP mereka akan diblokir selama 1 jam.
 
----
+Cek IP terblokir: fail2ban-client status wordpress
+
+Buka blokir IP: fail2ban-client set wordpress unbanip [ALAMAT_IP]
+
+📧 Notifikasi Email (SMTP Gmail)
+Agar WordPress Anda bisa mengirim email (seperti notifikasi password), ikuti langkah konfigurasi berikut:
+
+Google Account: Aktifkan 2-Step Verification dan buat App Password (16 digit).
+
+WordPress Plugin: Gunakan plugin WP Mail SMTP.
+
+Settings:
+
+SMTP Host: smtp.gmail.com
+
+Encryption: TLS (Port 587)
+
+Username: Email Gmail Anda.
+
+Password: 16 digit App Password yang baru dibuat.
+
+📂 Struktur Izin File
+Skrip ini secara otomatis mengatur izin file WordPress sesuai standar keamanan:
+
+Folder: 755 (Hanya pemilik yang bisa tulis).
+
+File: 644 (Hanya pemilik yang bisa ubah).
+
+Ownership: www-data (Aman untuk operasional Nginx).
