@@ -1,7 +1,8 @@
 ```
 # 🚀 WordPress Server Rebuild Automation (Debian/LEMP)
 
-Skrip otomatisasi untuk membangun ulang (rebuild) server WordPress dengan standar keamanan tinggi (*Hardening*) menggunakan stack modern.
+Skrip otomatisasi untuk membangun ulang (rebuild) server WordPress
+dengan standar keamanan tinggi (*Hardening*) menggunakan stack modern.
 
 ## 🛠️ Stack Teknologi
 - **Web Server:** Nginx (Anti-conflict config)
@@ -27,7 +28,8 @@ curl -sSL [MASUKKAN_URL_RAW_GITHUB_ANDA] -o rb.sh && chmod +x rb.sh && ./rb.sh
 
 ### 2. Panduan Penting Saat Instalasi
 
-* **Konfigurasi msmtp:** Jika muncul layar biru konfigurasi `msmtp`, pilih **`<No>`** pada opsi AppArmor untuk menghindari error perizinan.
+* **Konfigurasi msmtp:** Jika muncul layar biru konfigurasi `msmtp`,
+pilih **`<No>`** pada opsi AppArmor untuk menghindari error perizinan.
 * **Password Database:** Masukkan password yang kuat saat diminta di awal skrip.
 
 ## 📧 Konfigurasi Email (SMTP Gmail)
