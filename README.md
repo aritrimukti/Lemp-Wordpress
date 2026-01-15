@@ -1,4 +1,4 @@
-```markdown
+```
 # 🚀 WordPress Server Rebuild Automation (Debian/LEMP)
 
 Skrip otomatisasi untuk membangun ulang (rebuild) server WordPress dengan standar keamanan tinggi (*Hardening*) menggunakan stack modern.
