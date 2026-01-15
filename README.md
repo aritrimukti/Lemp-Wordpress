@@ -20,7 +20,7 @@ Skrip otomatisasi untuk membangun ulang (rebuild) server WordPress dengan standa
 
 ### 1. Metode One-Liner (Instan)
 Jalankan perintah berikut di terminal server Anda:
-```bash
+```
 curl -sSL [MASUKKAN_URL_RAW_GITHUB_ANDA] -o rb.sh && chmod +x rb.sh && ./rb.sh
 
 ```
