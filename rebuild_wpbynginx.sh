@@ -1,6 +1,6 @@
 #!/bin/bash
 # =================================================================
-# REBUILD_WPBYNGINX.SH (DEBIAN OPTIMIZED - PHP 8.3)
+# REBUILD_WPBYNGINX.SH (DEBIAN FIX - AUTO DETECT VERSION)
 # =================================================================
 
 # Validasi Root
@@ -18,19 +18,31 @@ read -p "Masukkan Email Admin untuk Notifikasi: " ADMIN_EMAIL
 echo "==============================================================="
 
 # --- 1. CLEANING ---
-echo "[1/6] Menghapus data lama secara total..."
+echo "[1/6] Menghapus data lama & membersihkan repositori rusak..."
 systemctl stop nginx mariadb php*-fpm fail2ban 2>/dev/null
 apt purge nginx* mariadb* php8.3* phpmyadmin* fail2ban* -y
 apt autoremove -y && apt autoclean
 rm -rf /var/www/html/* /etc/nginx /etc/mysql /var/lib/mysql /etc/php /usr/share/phpmyadmin /etc/fail2ban
+# Hapus file list yang rusak dari percobaan sebelumnya
+rm -f /etc/apt/sources.list.d/php.list
 
-# --- 2. REPOSITORY SETUP (DEBIAN FIX) ---
-echo "[2/6] Mengonfigurasi Repositori PHP 8.3 & Dependensi..."
-apt update && apt install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2 curl
+# --- 2. REPOSITORY SETUP (DEBIAN ROBUST FIX) ---
+echo "[2/6] Mengonfigurasi Repositori PHP 8.3..."
+apt update && apt install -y ca-certificates apt-transport-https gnupg2 curl lsb-release
 
-# Menambahkan GPG Key dan Repo Sury untuk Debian
-curl -sSL https://packages.sury.org/php/apt.gpg | gpg --dearmor -o /usr/share/keyrings/php-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/php-archive-keyring.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
+# Deteksi nama versi Debian (bookworm/bullseye/etc)
+DEB_VERSION=$(. /etc/os-release && echo "$VERSION_CODENAME")
+
+# Jika deteksi gagal, gunakan metode alternatif
+if [ -z "$DEB_VERSION" ]; then
+    DEB_VERSION=$(lsb_release -sc)
+fi
+
+# Menambahkan GPG Key resmi Sury
+curl -sSL https://packages.sury.org/php/apt.gpg | gpg --dearmor --yes -o /usr/share/keyrings/php-archive-keyring.gpg
+
+# Membuat file list dengan path yang benar
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/php-archive-keyring.gpg] https://packages.sury.org/php/ $DEB_VERSION main" > /etc/apt/sources.list.d/php.list
 
 apt update
 
@@ -46,7 +58,9 @@ mariadb -e "FLUSH PRIVILEGES;"
 
 # --- 5. SECURITY HARDENING ---
 echo "[4/6] Mengaktifkan Nginx Hardening & Fail2Ban..."
-sed -i 's/# server_tokens off;/server_tokens off;/' /etc/nginx/nginx.conf
+# Pastikan folder nginx ada sebelum edit
+mkdir -p /etc/nginx/sites-available
+sed -i 's/# server_tokens off;/server_tokens off;/' /etc/nginx/nginx.conf 2>/dev/null
 
 cat > /etc/nginx/sites-available/default <<EOF
 server {
@@ -72,6 +86,7 @@ server {
 EOF
 
 # Config Fail2Ban khusus WordPress Login
+mkdir -p /etc/fail2ban/filter.d
 cat > /etc/fail2ban/filter.d/wordpress.conf <<EOF
 [Definition]
 failregex = ^<HOST>.*POST.*(wp-login\.php|xmlrpc\.php).* 200
@@ -93,7 +108,9 @@ echo "[5/6] Memasang WordPress & phpMyAdmin (URL Rahasia)..."
 export DEBIAN_FRONTEND=noninteractive
 echo "phpmyadmin phpmyadmin/dbconfig-install boolean false" | debconf-set-selections
 apt install phpmyadmin -y
-ln -s /usr/share/phpmyadmin /var/www/html/kelola_db_amancd /var/www/html
+ln -s /usr/share/phpmyadmin /var/www/html/kelola_db_amancd 2>/dev/null
+
+cd /var/www/html
 wget https://wordpress.org/latest.tar.gz
 tar -xzvf latest.tar.gz && cp -R wordpress/* . && rm -rf wordpress latest.tar.gz
 
@@ -105,7 +122,7 @@ find /var/www/html/ -type f -exec chmod 644 {} \;
 
 systemctl restart nginx php8.3-fpm fail2ban
 
-# --- RINGKASAN DATA AKHIR (Sesuai Permintaan Anda) ---
+# --- RINGKASAN DATA AKHIR ---
 echo -e "\n"
 echo "==============================================================="
 echo "             RINGKASAN DATA (SIMPAN & CATAT!)"
